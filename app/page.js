@@ -5,12 +5,13 @@ import { Calculator } from 'lucide-react';
 
 export default function CalculateurSalaire() {
   const [joursPresence, setJoursPresence] = useState('');
-  const [inclureFreais, setInclureFreais] = useState(true);
+  const [joursFrais, setJoursFrais] = useState('');
   const [resultats, setResultats] = useState(null);
 
   const calculerSalaire = () => {
     const jours = parseFloat(joursPresence);
-    
+    const joursFraisValue = parseFloat(joursFrais) || 0;
+
     if (isNaN(jours) || jours < 0) {
       alert('Veuillez entrer un nombre de jours valide');
       return;
@@ -18,10 +19,10 @@ export default function CalculateurSalaire() {
 
     // Calcul 1: jours × 4,22 × 9,5
     const calcul1 = jours * 4.22 * 9.5;
-    
-    // Calcul 2: jours × 3,69 (seulement si inclus)
-    const calcul2 = inclureFreais ? jours * 3.69 : 0;
-    
+
+    // Calcul 2: jours frais × 3,69
+    const calcul2 = joursFraisValue * 3.69;
+
     // Total
     const total = calcul1 + calcul2;
 
@@ -29,12 +30,13 @@ export default function CalculateurSalaire() {
       calcul1: calcul1.toFixed(2),
       calcul2: calcul2.toFixed(2),
       total: total.toFixed(2),
-      inclureFreais: inclureFreais
+      joursFrais: joursFraisValue
     });
   };
 
   const reinitialiser = () => {
     setJoursPresence('');
+    setJoursFrais('');
     setResultats(null);
   };
 
@@ -69,20 +71,21 @@ export default function CalculateurSalaire() {
             />
           </div>
 
-          <div className="flex items-center space-x-3 bg-amber-50 p-4 rounded-lg border border-amber-200">
-            <input
-              type="checkbox"
-              id="inclureFreais"
-              checked={inclureFreais}
-              onChange={(e) => setInclureFreais(e.target.checked)}
-              className="w-5 h-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-            />
-            <label htmlFor="inclureFreais" className="text-sm text-gray-700 cursor-pointer">
-              Inclure les frais (× 3,69)
-              <span className="block text-xs text-gray-500 mt-1">
-                Décocher pour les périodes de congés
-              </span>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Nombre de jours pour les frais (× 3,69)
             </label>
+            <input
+              type="number"
+              step="0.01"
+              value={joursFrais}
+              onChange={(e) => setJoursFrais(e.target.value)}
+              placeholder="Ex: 18"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none transition"
+            />
+            <p className="text-xs text-gray-500 mt-2">
+              Laisser vide ou 0 pour ne pas inclure les frais
+            </p>
           </div>
 
           <button
@@ -108,14 +111,14 @@ export default function CalculateurSalaire() {
                 
                 <div className="flex justify-between items-center py-2 border-b border-gray-200">
                   <span className="text-sm text-gray-600">
-                    {joursPresence} × 3,69
-                    {!resultats.inclureFreais && (
+                    {resultats.joursFrais} × 3,69
+                    {resultats.joursFrais === 0 && (
                       <span className="ml-2 text-xs text-amber-600 font-medium">
                         (non inclus)
                       </span>
                     )}
                   </span>
-                  <span className={`font-semibold ${resultats.inclureFreais ? 'text-gray-800' : 'text-gray-400'}`}>
+                  <span className={`font-semibold ${resultats.joursFrais > 0 ? 'text-gray-800' : 'text-gray-400'}`}>
                     {resultats.calcul2} €
                   </span>
                 </div>
