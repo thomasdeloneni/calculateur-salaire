@@ -13,6 +13,7 @@ export default function CalculateurSalaire() {
     const joursFraisValue = parseFloat(joursFrais) || 0;
 
     if (isNaN(jours) || jours < 0) {
+      //test
       alert('Veuillez entrer un nombre de jours valide');
       return;
     }
