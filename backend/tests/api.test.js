@@ -4,60 +4,115 @@
  */
 const request = require('supertest');
 const express = require('express');
-const { createContainer } = require('../src/utils/ServiceFactory');
 
-// Mock database
-jest.mock('../src/config/database', () => ({
-  execute: jest.fn(),
-  getConnection: jest.fn()
-}));
+// Create mock repositories
+const mockUserRepository = {
+  findByEmail: jest.fn(),
+  findById: jest.fn(),
+  create: jest.fn()
+};
 
-const pool = require('../src/config/database');
+const mockConfigRepository = {
+  findByUserId: jest.fn(),
+  createDefault: jest.fn(),
+  update: jest.fn()
+};
+
+const mockCalculationRepository = {
+  save: jest.fn(),
+  findByUserId: jest.fn()
+};
+
+const mockPasswordHasher = {
+  hash: jest.fn().mockResolvedValue('$argon2i$hashedpassword'),
+  verify: jest.fn().mockResolvedValue(true)
+};
+
+const mockTokenService = {
+  generate: jest.fn().mockReturnValue('mock-token'),
+  verify: jest.fn().mockReturnValue({ id: 1, email: 'test@example.com' })
+};
+
+const mockSalaryCalculator = {
+  calculate: jest.fn().mockReturnValue({
+    days_presence: 20,
+    days_expense: 20,
+    hours_total: 160,
+    salary_base: 801.8,
+    expense_total: 73.8,
+    grand_total: 875.6,
+    toJSON: function() {
+      return {
+        days_presence: this.days_presence,
+        days_expense: this.days_expense,
+        hours_total: this.hours_total,
+        salary_base: this.salary_base,
+        expense_total: this.expense_total,
+        grand_total: this.grand_total
+      };
+    }
+  })
+};
+
+// Import services with mocked dependencies
+const AuthService = require('../src/services/AuthService');
+const ConfigService = require('../src/services/ConfigService');
+const CalculationService = require('../src/services/CalculationService');
+const AuthController = require('../src/controllers/AuthController');
+const ConfigController = require('../src/controllers/ConfigController');
+const CalculationController = require('../src/controllers/CalculationController');
+const AuthMiddleware = require('../src/middleware/AuthMiddleware');
 
 describe('API Integration Tests', () => {
   let app;
-  let container;
   let testToken;
+  let authService;
+  let configService;
+  let calculationService;
+  let authController;
+  let configController;
+  let calculationController;
+  let authMiddleware;
 
   beforeAll(() => {
-    // Create app for testing
+    // Create services with mocked dependencies
+    authService = new AuthService(mockUserRepository, mockPasswordHasher, mockTokenService);
+    configService = new ConfigService(mockConfigRepository);
+    calculationService = new CalculationService(mockConfigRepository, mockCalculationRepository, mockSalaryCalculator);
+    
+    // Create controllers
+    authController = new AuthController(authService);
+    configController = new ConfigController(configService);
+    calculationController = new CalculationController(calculationService);
+    
+    // Create middleware
+    authMiddleware = new AuthMiddleware(mockTokenService);
+    
+    // Create app
     app = express();
     app.use(express.json());
-    
-    container = createContainer();
-    
-    const authController = container.get('authController');
-    const configController = container.get('configController');
-    const calculationController = container.get('calculationController');
-    const authMiddleware = container.get('authMiddleware');
     
     // Auth routes
     app.post('/auth/register', (req, res) => authController.register(req, res));
     app.post('/auth/login', (req, res) => authController.login(req, res));
     
     // Config routes (protected)
-    app.get('/config', (req, res) => authMiddleware.authenticate(req, res, (err) => {
-      if (err) return res.status(401).json({ error: 'Invalid token' });
+    app.get('/config', (req, res) => authMiddleware.authenticate(req, res, () => {
       configController.get(req, res);
     }));
-    app.put('/config', (req, res) => authMiddleware.authenticate(req, res, (err) => {
-      if (err) return res.status(401).json({ error: 'Invalid token' });
+    app.put('/config', (req, res) => authMiddleware.authenticate(req, res, () => {
       configController.update(req, res);
     }));
     
     // Calculation routes (protected)
-    app.post('/calculate', (req, res) => authMiddleware.authenticate(req, res, (err) => {
-      if (err) return res.status(401).json({ error: 'Invalid token' });
+    app.post('/calculate', (req, res) => authMiddleware.authenticate(req, res, () => {
       calculationController.calculate(req, res);
     }));
-    app.get('/calculate', (req, res) => authMiddleware.authenticate(req, res, (err) => {
-      if (err) return res.status(401).json({ error: 'Invalid token' });
+    app.get('/calculate', (req, res) => authMiddleware.authenticate(req, res, () => {
       calculationController.getHistory(req, res);
     }));
     
-    // Generate test token
-    const tokenService = container.get('tokenService');
-    testToken = tokenService.generate({ id: 1, email: 'test@example.com' });
+    testToken = 'mock-token';
   });
 
   beforeEach(() => {
@@ -67,15 +122,21 @@ describe('API Integration Tests', () => {
   describe('Auth Endpoints', () => {
     describe('POST /auth/register', () => {
       it('should register a new user', async () => {
-        pool.execute.mockResolvedValueOnce([{ insertId: 1 }, []]);
-        pool.execute.mockResolvedValueOnce([[], []]);
+        mockUserRepository.findByEmail.mockResolvedValue(null);
+        mockUserRepository.create.mockResolvedValue({
+          id: 1,
+          email: 'new@example.com',
+          password_hash: '$argon2i$hashedpassword',
+          created_at: new Date(),
+          updated_at: new Date()
+        });
 
         const response = await request(app)
           .post('/auth/register')
           .send({ email: 'new@example.com', password: 'password123' });
 
         expect(response.status).toBe(201);
-        expect(response.body.token).toBeDefined();
+        expect(response.body.token).toBe('mock-token');
         expect(response.body.user.email).toBe('new@example.com');
       });
 
@@ -98,9 +159,10 @@ describe('API Integration Tests', () => {
       });
 
       it('should handle duplicate email', async () => {
-        const error = new Error('Duplicate entry');
-        error.code = 'ER_DUP_ENTRY';
-        pool.execute.mockRejectedValueOnce(error);
+        mockUserRepository.findByEmail.mockResolvedValue({
+          id: 1,
+          email: 'existing@example.com'
+        });
 
         const response = await request(app)
           .post('/auth/register')
@@ -113,30 +175,42 @@ describe('API Integration Tests', () => {
 
     describe('POST /auth/login', () => {
       it('should login successfully', async () => {
-        const { PasswordHasher } = require('../src/services/PasswordHasher');
-        const hasher = new PasswordHasher();
-        const passwordHash = await hasher.hash('password123');
-        
-        pool.execute.mockResolvedValueOnce([[{ 
-          id: 1, 
-          email: 'test@example.com', 
-          password_hash: passwordHash 
-        }], []]);
+        mockUserRepository.findByEmail.mockResolvedValue({
+          id: 1,
+          email: 'test@example.com',
+          password_hash: '$argon2i$hashedpassword'
+        });
 
         const response = await request(app)
           .post('/auth/login')
           .send({ email: 'test@example.com', password: 'password123' });
 
         expect(response.status).toBe(200);
-        expect(response.body.token).toBeDefined();
+        expect(response.body.token).toBe('mock-token');
       });
 
-      it('should reject invalid credentials', async () => {
-        pool.execute.mockResolvedValueOnce([[], []]);
+      it('should reject invalid credentials - non-existent user', async () => {
+        mockUserRepository.findByEmail.mockResolvedValue(null);
 
         const response = await request(app)
           .post('/auth/login')
           .send({ email: 'nonexistent@example.com', password: 'password123' });
+
+        expect(response.status).toBe(401);
+        expect(response.body.error).toBe('Invalid credentials');
+      });
+
+      it('should reject invalid credentials - wrong password', async () => {
+        mockUserRepository.findByEmail.mockResolvedValue({
+          id: 1,
+          email: 'test@example.com',
+          password_hash: '$argon2i$hashedpassword'
+        });
+        mockPasswordHasher.verify.mockResolvedValue(false);
+
+        const response = await request(app)
+          .post('/auth/login')
+          .send({ email: 'test@example.com', password: 'wrongpassword' });
 
         expect(response.status).toBe(401);
         expect(response.body.error).toBe('Invalid credentials');
@@ -147,14 +221,23 @@ describe('API Integration Tests', () => {
   describe('Config Endpoints', () => {
     describe('GET /config', () => {
       it('should return user config', async () => {
-        pool.execute.mockResolvedValueOnce([[{
+        mockConfigRepository.findByUserId.mockResolvedValue({
           user_id: 1,
-          days_per_month: '4.22',
-          hours_per_day: '8.0',
-          expense_per_day: '3.69',
-          salary_multiplier: '9.5',
-          expense_multiplier: '1.0'
-        }], []]);
+          days_per_month: 4.22,
+          hours_per_day: 8.0,
+          expense_per_day: 3.69,
+          salary_multiplier: 9.5,
+          expense_multiplier: 1.0,
+          toJSON: function() {
+            return {
+              days_per_month: this.days_per_month,
+              hours_per_day: this.hours_per_day,
+              expense_per_day: this.expense_per_day,
+              salary_multiplier: this.salary_multiplier,
+              expense_multiplier: this.expense_multiplier
+            };
+          }
+        });
 
         const response = await request(app)
           .get('/config')
@@ -170,19 +253,55 @@ describe('API Integration Tests', () => {
         expect(response.status).toBe(401);
         expect(response.body.error).toBe('No token provided');
       });
+
+      it('should create default config if not exists', async () => {
+        mockConfigRepository.findByUserId.mockResolvedValue(null);
+        mockConfigRepository.createDefault.mockResolvedValue({
+          user_id: 1,
+          days_per_month: 4.22,
+          hours_per_day: 8.0,
+          expense_per_day: 3.69,
+          salary_multiplier: 9.5,
+          expense_multiplier: 1.0,
+          toJSON: function() {
+            return {
+              days_per_month: this.days_per_month,
+              hours_per_day: this.hours_per_day,
+              expense_per_day: this.expense_per_day,
+              salary_multiplier: this.salary_multiplier,
+              expense_multiplier: this.expense_multiplier
+            };
+          }
+        });
+
+        const response = await request(app)
+          .get('/config')
+          .set('Authorization', `Bearer ${testToken}`);
+
+        expect(response.status).toBe(200);
+        expect(mockConfigRepository.createDefault).toHaveBeenCalledWith(1);
+      });
     });
 
     describe('PUT /config', () => {
       it('should update user config', async () => {
-        pool.execute.mockResolvedValueOnce([{ affectedRows: 1 }, []]);
-        pool.execute.mockResolvedValueOnce([[{
+        mockConfigRepository.update.mockResolvedValue({
           user_id: 1,
-          days_per_month: '5.0',
-          hours_per_day: '7.5',
-          expense_per_day: '4.0',
-          salary_multiplier: '10.0',
-          expense_multiplier: '1.2'
-        }], []]);
+          days_per_month: 5.0,
+          hours_per_day: 7.5,
+          expense_per_day: 4.0,
+          salary_multiplier: 10.0,
+          expense_multiplier: 1.2,
+          toJSON: function() {
+            return {
+              days_per_month: this.days_per_month,
+              hours_per_day: this.hours_per_day,
+              expense_per_day: this.expense_per_day,
+              salary_multiplier: this.salary_multiplier,
+              expense_multiplier: this.expense_multiplier
+            };
+          }
+        });
 
         const response = await request(app)
           .put('/config')
@@ -195,21 +314,41 @@ describe('API Integration Tests', () => {
         expect(response.status).toBe(200);
         expect(response.body.message).toBe('Configuration updated successfully');
       });
+
+      it('should reject invalid values', async () => {
+        const response = await request(app)
+          .put('/config')
+          .set('Authorization', `Bearer ${testToken}`)
+          .send({ days_per_month: -5 });
+
+        expect(response.status).toBe(400);
+        expect(response.body.error).toContain('days_per_month must be a positive number');
+      });
     });
   });
 
   describe('Calculate Endpoints', () => {
     describe('POST /calculate', () => {
       it('should calculate salary', async () => {
-        pool.execute.mockResolvedValueOnce([[{
+        mockConfigRepository.findByUserId.mockResolvedValue({
           user_id: 1,
-          days_per_month: '4.22',
-          hours_per_day: '8.0',
-          expense_per_day: '3.69',
-          salary_multiplier: '9.5',
-          expense_multiplier: '1.0'
-        }], []]);
-        pool.execute.mockResolvedValueOnce([{ insertId: 1 }, []]);
+          days_per_month: 4.22,
+          hours_per_day: 8.0,
+          expense_per_day: 3.69,
+          salary_multiplier: 9.5,
+          expense_multiplier: 1.0
+        });
+        mockCalculationRepository.save.mockResolvedValue({
+          id: 1,
+          user_id: 1,
+          input_days: 20,
+          input_expense_days: 20,
+          hours_total: 160,
+          salary_total: 801.8,
+          expense_total: 73.8,
+          grand_total: 875.6,
+          created_at: new Date()
+        });
 
         const response = await request(app)
           .post('/calculate')
@@ -242,21 +381,66 @@ describe('API Integration Tests', () => {
         expect(response.status).toBe(400);
         expect(response.body.error).toContain('days_presence must be a non-negative number');
       });
+
+      it('should use default config if not exists', async () => {
+        mockConfigRepository.findByUserId.mockResolvedValue(null);
+        mockConfigRepository.createDefault.mockResolvedValue({
+          user_id: 1,
+          days_per_month: 4.22,
+          hours_per_day: 8.0,
+          expense_per_day: 3.69,
+          salary_multiplier: 9.5,
+          expense_multiplier: 1.0
+        });
+        mockCalculationRepository.save.mockResolvedValue({
+          id: 1,
+          user_id: 1,
+          input_days: 20,
+          input_expense_days: 20,
+          hours_total: 160,
+          salary_total: 801.8,
+          expense_total: 73.8,
+          grand_total: 875.6,
+          created_at: new Date()
+        });
+
+        const response = await request(app)
+          .post('/calculate')
+          .set('Authorization', `Bearer ${testToken}`)
+          .send({ days_presence: 20 });
+
+        expect(response.status).toBe(200);
+        expect(mockConfigRepository.createDefault).toHaveBeenCalledWith(1);
+      });
     });
 
     describe('GET /calculate', () => {
       it('should return calculation history', async () => {
-        pool.execute.mockResolvedValueOnce([[{
-          id: 1,
-          user_id: 1,
-          input_days: '20',
-          input_expense_days: '20',
-          hours_total: '160',
-          salary_total: '801.8',
-          expense_total: '73.8',
-          grand_total: '875.6',
-          created_at: new Date()
-        }], []]);
+        mockCalculationRepository.findByUserId.mockResolvedValue([
+          {
+            id: 1,
+            user_id: 1,
+            input_days: 20,
+            input_expense_days: 20,
+            hours_total: 160,
+            salary_total: 801.8,
+            expense_total: 73.8,
+            grand_total: 875.6,
+            created_at: new Date(),
+            toJSON: function() {
+              return {
+                id: this.id,
+                days_presence: this.input_days,
+                days_expense: this.input_expense_days,
+                hours_total: this.hours_total,
+                salary_base: this.salary_total,
+                expense_total: this.expense_total,
+                grand_total: this.grand_total,
+                created_at: this.created_at
+              };
+            }
+          }
+        ]);
 
         const response = await request(app)
           .get('/calculate')
