@@ -9,7 +9,13 @@
     "test": "jest --coverage",
     "test:watch": "jest --watch"
   },
-  "keywords": ["salary", "calculator", "api", "assistant-maternel", "clean-architecture"],
+  "keywords": [
+    "salary",
+    "calculator",
+    "api",
+    "assistant-maternel",
+    "clean-architecture"
+  ],
   "author": "",
   "license": "ISC",
   "dependencies": {
@@ -19,6 +25,7 @@
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",
     "mysql2": "^3.16.2",
+    "stripe": "^20.3.0",
     "uuid": "^9.0.0"
   },
   "devDependencies": {
@@ -27,7 +34,9 @@
   },
   "jest": {
     "testEnvironment": "node",
-    "testMatch": ["**/tests/**/*.test.js"],
+    "testMatch": [
+      "**/tests/**/*.test.js"
+    ],
     "collectCoverageFrom": [
       "src/**/*.js",
       "!src/index.js",

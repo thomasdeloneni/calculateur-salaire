@@ -15,13 +15,16 @@ const AuthController = require('./controllers/AuthController');
 const CalculatorController = require('./controllers/CalculatorController');
 const ConfigController = require('./controllers/ConfigController');
 const HistoryController = require('./controllers/HistoryController');
+const PaymentController = require('./controllers/PaymentController');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ verify: (req, res, buf) => {
+  req.rawBody = buf;
+} }));
 app.use(express.urlencoded({ extended: true }));
 
 // Request logging
@@ -44,12 +47,23 @@ const authController = new AuthController();
 const calculatorController = new CalculatorController();
 const configController = new ConfigController();
 const historyController = new HistoryController();
+const paymentController = new PaymentController();
 
 // Public routes
 app.post('/api/auth/register', authController.register.bind(authController));
 app.post('/api/auth/login', authController.login.bind(authController));
 app.get('/api/calculator/preview', optionalAuth, calculatorController.preview.bind(calculatorController));
 app.post('/api/calculator/calculate', optionalAuth, calculatorController.calculate.bind(calculatorController));
+
+// Payment routes (public for webhooks, protected for user actions)
+app.post('/api/payment/webhook', express.raw({ type: 'application/json' }), paymentController.handleWebhook.bind(paymentController));
+app.get('/api/payment/plans', paymentController.getPlans.bind(paymentController));
+app.post('/api/payment/create-checkout-session', authenticate, paymentController.createCheckoutSession.bind(paymentController));
+app.post('/api/payment/one-time', authenticate, paymentController.createOneTimePayment.bind(paymentController));
+app.get('/api/payment/verify-session/:sessionId', authenticate, paymentController.verifySession.bind(paymentController));
+app.get('/api/payment/subscription', authenticate, paymentController.getSubscription.bind(paymentController));
+app.post('/api/payment/cancel-subscription', authenticate, paymentController.cancelSubscription.bind(paymentController));
+app.post('/api/payment/billing-portal', authenticate, paymentController.openBillingPortal.bind(paymentController));
 
 // Protected routes
 app.get('/api/auth/me', authenticate, authController.me.bind(authController));

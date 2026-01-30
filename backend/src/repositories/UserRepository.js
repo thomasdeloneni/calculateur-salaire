@@ -106,6 +106,48 @@ class UserRepository {
     );
     return result.affectedRows > 0;
   }
+
+  /**
+   * Update Stripe customer ID
+   * @param {string} userId
+   * @param {string} stripeCustomerId
+   * @returns {Promise<boolean>}
+   */
+  async updateStripeCustomerId(userId, stripeCustomerId) {
+    const [result] = await db.query(
+      `UPDATE ${this.tableName} SET stripe_customer_id = ? WHERE id = ?`,
+      [stripeCustomerId, userId]
+    );
+    return result.affectedRows > 0;
+  }
+
+  /**
+   * Update Stripe subscription ID
+   * @param {string} userId
+   * @param {string} stripeSubscriptionId
+   * @returns {Promise<boolean>}
+   */
+  async updateStripeSubscriptionId(userId, stripeSubscriptionId) {
+    const [result] = await db.query(
+      `UPDATE ${this.tableName} SET stripe_subscription_id = ? WHERE id = ?`,
+      [stripeSubscriptionId, userId]
+    );
+    return result.affectedRows > 0;
+  }
+
+  /**
+   * Update subscription status
+   * @param {string} userId
+   * @param {string} status
+   * @returns {Promise<boolean>}
+   */
+  async updateSubscriptionStatus(userId, status) {
+    const [result] = await db.query(
+      `UPDATE ${this.tableName} SET subscription_status = ? WHERE id = ?`,
+      [status, userId]
+    );
+    return result.affectedRows > 0;
+  }
 }
 
 module.exports = UserRepository;
