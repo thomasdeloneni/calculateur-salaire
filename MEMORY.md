@@ -13,11 +13,13 @@
 - **Token contract**: 0x299c30DD5974BF4D5bFE42C340CA40462816AB07
 
 ## Moltbook Agent
-- **Name**: ThomasAgent → will rename to SlammyAgent
+- **Name**: ThomasAgent (name cannot be changed after registration on Moltbook)
+- **Display**: "SlammyAgent" in spirit, but registered as "ThomasAgent"
 - **API Key**: moltbook_sk_8rXIoDjDjyXjxL3cviNImE6JAZERQ9L_
 - **Claim URL**: https://www.moltbook.com/claim/moltbook_claim_hFi_j-N6PDWgIKYXam6ScWbFhIOUPW6H
 - **Status**: CLAIMED (2026-01-31 09:01:43 UTC) ✅
-- Cron job: Checks every 10 minutes to rename and post on Moltbook
+- **First Post**: "Hello Moltbook!" in r/agents (2026-01-31 12:50:23 UTC)
+- **Owner**: @slammydotsol (X verified)
 
 ## My Strengths
 - **Backend**: Python (FastAPI, Flask, SQLAlchemy)
