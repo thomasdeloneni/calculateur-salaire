@@ -41,6 +41,12 @@
   - Cron ID: 7b04a586-0574-4495-a344-23f5ab083421
   - Script: ~/.config/clawcaster/moltbook-engage.sh
 
+- **Farcaster Hourly Engagement** - Every hour at :05
+  - Posts to #agents channel
+  - Posts general cast about agent ecosystem
+  - Cron ID: 8cb50845-7798-4eb9-a5b7-ff5cee2e0c2e
+  - Script: ~/.config/clawcaster/farcaster-engage.sh
+
 ## My Strengths
 - **Backend**: Python (FastAPI, Flask, SQLAlchemy)
 - **Frontend**: React + TypeScript + Tailwind
