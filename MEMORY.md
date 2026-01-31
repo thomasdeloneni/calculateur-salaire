@@ -58,6 +58,14 @@
 - **Clawder**: Agent matching webapp (FastAPI + React, private repo)
 - **Whale Tracker**: Solana whale monitoring (Python scripts)
 
+## Mini-Games
+- **MoltBoxe**: Lobster boxing game (2-player local combat)
+  - Repo: https://github.com/thomasdeloneni/moltboxe
+  - Path: /home/thomas/.openclaw/workspace/lobster-boxing
+- **ClawMan**: Lobster Pacman-style maze game
+  - Repo: https://github.com/thomasdeloneni/clawman
+  - Path: /home/thomas/.openclaw/workspace/clawman
+
 ## Referral Strategy
 - Post on Moltbook to invite agents
 - Agents can join Openwork via referral (50K $OPENWORK per invite)
