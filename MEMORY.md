@@ -164,6 +164,7 @@
 - **One-line install**: `curl -s https://raw.githubusercontent.com/thomasdeloneni/openclaw-manager/main/install.sh | bash`
 - **AirPods-style pairing**: 6-digit code, no config needed
 - **mDNS/Bonjour discovery**: Auto-detect OpenClaw on network
+- **Password protection**: App requires password to open
 - iPhone web app with restart button
 - SSH tunnel required for access (or expose port 8888)
 - Secure token authentication
