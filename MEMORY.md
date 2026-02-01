@@ -158,3 +158,11 @@
 - Mode selection on login screen
 - Collision = both lose a life in 1v1
 - **Repo**: https://github.com/thomasdeloneni/clawman-arena (private)
+
+### OpenClaw Manager (iPhone Control)
+- **Repo**: https://github.com/thomasdeloneni/openclaw-manager (private)
+- iPhone web app with restart button
+- SSH tunnel required for access
+- Secure token authentication
+- Status monitoring
+- Add to Home Screen for app experience
