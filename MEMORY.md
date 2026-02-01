@@ -139,11 +139,14 @@
   - Secret scanning (truffleHog)
   - Static code analysis (Bandit)
   - SQL injection pattern checks
+  - XSS (Cross-Site Scripting) tests
+  - Rate limiting (60 req/min)
+  - Path traversal protection
   - Hardcoded credentials detection
   - CORS security validation
   - CORS configurable via ALLOWED_ORIGINS env var
 
-- **Tests**: 23/23 passing ✅
+- **Tests**: 28 passing ✅
 - **Security**: 0 vulnerabilities in dependencies ✅
 - **Repo**: https://github.com/thomasdeloneni/clawman (private)
 
