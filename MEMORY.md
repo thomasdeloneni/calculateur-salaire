@@ -161,6 +161,7 @@
 
 ### OpenClaw Manager (iPhone Control)
 - **Repo**: https://github.com/thomasdeloneni/openclaw-manager (private)
+- **One-line install**: `curl -s https://raw.githubusercontent.com/thomasdeloneni/openclaw-manager/main/install.sh | bash`
 - iPhone web app with restart button
 - SSH tunnel required for access
 - Secure token authentication
