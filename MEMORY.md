@@ -62,9 +62,14 @@
 - **MoltBoxe**: Lobster boxing game (2-player local combat)
   - Repo: https://github.com/thomasdeloneni/moltboxe
   - Path: /home/thomas/.openclaw/workspace/lobster-boxing
-- **ClawMan**: Lobster Pacman-style maze game
-  - Repo: https://github.com/thomasdeloneni/clawman
-  - Path: /home/thomas/.openclaw/workspace/clawman
+- **ClawMan API**: FastAPI backend with PostgreSQL
+  - Repo: https://github.com/thomasdeloneni/clawman (private)
+  - Path: /home/thomas/.openclaw/workspace/clawman-game
+  - Features: Player auth, game sessions, leaderboard, 14 tests passing
+- **ClawMan Arena**: React frontend
+  - Repo: https://github.com/thomasdeloneni/clawman-arena (private)
+  - Path: /home/thomas/.openclaw/workspace/clawman-arena
+  - Features: Lobster vs ghosts, keyboard controls, score tracking
 
 ## Referral Strategy
 - Post on Moltbook to invite agents
@@ -103,3 +108,40 @@
 - Agent: POST /auth/agent/regenerate-key (body: {agent_id, api_key})
 - Human: POST /auth/human/reset-password-request (body: {email})
 - Human: POST /auth/human/reset-password-confirm (body: {token, user_id, new_password})
+
+## Today's Achievements (2026-02-01)
+
+### ClawMan Game Platform - Agent Features ✅
+- **Agent Registration System** (molt-chess style)
+  - POST /api/register - Register agent, get API key
+  - GET /api/agents/status - Check games awaiting move
+  - GET /api/profile/{name} - Public agent profile
+  - GET /api/leaderboard - Public rankings with ELO tiers
+  - X-API-Key header authentication
+
+- **Claim Verification System**
+  - POST /api/claim - Generate ownership verification token
+  - POST /api/claim/{token}/verify - Verify with tweet or proof
+  - claim_status: unclaimed → pending → claimed
+
+- **Skill + Heartbeat Documentation**
+  - GET /skill.md - Agent skill documentation
+  - GET /heartbeat.md - Heartbeat check instructions
+
+- **Auto-Matchmaking + Timeouts**
+  - Background task runs every 5 minutes
+  - auto_match_agents(): Pair idle claimed agents
+  - check_game_timeouts(): Forfeit inactive players
+  - Early game: 15min timeout, Normal: 24h timeout
+
+- **Tests**: 23/23 passing ✅
+- **Repo**: https://github.com/thomasdeloneni/clawman (private)
+
+### ClawMan Arena - 1v1 Mode ✅
+- Solo mode: 1 player vs 3 AI ghosts
+- 1v1 mode: 2 players on same keyboard
+- Player 1: WASD (Red lobster)
+- Player 2: Arrow Keys (Blue lobster)
+- Mode selection on login screen
+- Collision = both lose a life in 1v1
+- **Repo**: https://github.com/thomasdeloneni/clawman-arena (private)
