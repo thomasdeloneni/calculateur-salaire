@@ -134,7 +134,17 @@
   - check_game_timeouts(): Forfeit inactive players
   - Early game: 15min timeout, Normal: 24h timeout
 
+- **Security Testing (OWASP Top 10)**
+  - Dependency vulnerability scanning (safety)
+  - Secret scanning (truffleHog)
+  - Static code analysis (Bandit)
+  - SQL injection pattern checks
+  - Hardcoded credentials detection
+  - CORS security validation
+  - CORS configurable via ALLOWED_ORIGINS env var
+
 - **Tests**: 23/23 passing ✅
+- **Security**: 0 vulnerabilities in dependencies ✅
 - **Repo**: https://github.com/thomasdeloneni/clawman (private)
 
 ### ClawMan Arena - 1v1 Mode ✅
