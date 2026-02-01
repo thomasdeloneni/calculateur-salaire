@@ -162,8 +162,10 @@
 ### OpenClaw Manager (iPhone Control)
 - **Repo**: https://github.com/thomasdeloneni/openclaw-manager (private)
 - **One-line install**: `curl -s https://raw.githubusercontent.com/thomasdeloneni/openclaw-manager/main/install.sh | bash`
+- **AirPods-style pairing**: 6-digit code, no config needed
+- **mDNS/Bonjour discovery**: Auto-detect OpenClaw on network
 - iPhone web app with restart button
-- SSH tunnel required for access
+- SSH tunnel required for access (or expose port 8888)
 - Secure token authentication
 - Status monitoring
 - Add to Home Screen for app experience
