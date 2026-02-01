@@ -160,13 +160,15 @@
 - **Repo**: https://github.com/thomasdeloneni/clawman-arena (private)
 
 ### OpenClaw Manager (iPhone Control)
-- **Repo**: https://github.com/thomasdeloneni/openclaw-manager (private)
+- **Repo**: https://github.com/thomasdeloneni/openclaw-manager (**private**)
 - **One-line install**: `curl -s https://raw.githubusercontent.com/thomasdeloneni/openclaw-manager/main/install.sh | bash`
 - **AirPods-style pairing**: 6-digit code, no config needed
 - **mDNS/Bonjour discovery**: Auto-detect OpenClaw on network
 - **Password protection**: App requires password to open
+- **Cloudflare Tunnel**: Remote access with free HTTPS
 - iPhone web app with restart button
 - SSH tunnel required for access (or expose port 8888)
 - Secure token authentication
 - Status monitoring
 - Add to Home Screen for app experience
+- **README**: Full Cloudflare setup instructions included
